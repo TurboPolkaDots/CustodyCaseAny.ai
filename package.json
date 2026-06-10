@@ -1,0 +1,120 @@
+{
+  "name": "custodycase-ai",
+  "version": "2.0.1",
+  "description": "Local-first, offline custody document analyzer. Free and open source.",
+  "main": "./out/main/index.js",
+  "license": "MIT",
+  "author": "randylahey-dev",
+  "homepage": "https://custodycaseai.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/randylahey-dev/CustodyCase.ai.git"
+  },
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "postinstall": "electron-builder install-app-deps",
+    "dist:mac": "electron-vite build && electron-builder --mac",
+    "dist:win": "electron-vite build && electron-builder --win",
+    "dist:linux": "electron-vite build && electron-builder --linux",
+    "dist": "electron-vite build && electron-builder --mac --win"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.2",
+    "chokidar": "^4.0.3",
+    "docx": "^9.2.0",
+    "lucide-react": "^0.474.0",
+    "mammoth": "^1.8.0",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.1.3",
+    "sharp": "^0.33.5",
+    "tesseract.js": "^5.1.1",
+    "word-extractor": "^1.0.4",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.6",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^34.1.1",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^3.0.0",
+    "tailwindcss": "^4.0.6"
+  },
+  "build": {
+    "appId": "com.custodycase.ai",
+    "productName": "CustodyCase.ai",
+    "copyright": "Copyright © 2026 CustodyCase.ai",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "out/**/*",
+      "!node_modules/**/*.{md,ts,map}",
+      "!node_modules/**/{test,tests,__tests__}/**"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**",
+      "node_modules/sharp/**",
+      "node_modules/@img/**",
+      "node_modules/tesseract.js-core/**"
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity",
+      "darkModeSupport": true,
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "notarize": true
+    },
+    "dmg": {
+      "artifactName": "CustodyCase-${version}-${arch}.dmg",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "CustodyCase-Setup-${version}.exe",
+      "shortcutName": "CustodyCase.ai"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Office"
+    },
+    "extraResources": [
+      {
+        "from": "node_modules/tesseract.js-core",
+        "to": "tesseract"
+      }
+    ],
+    "npmRebuild": true
+  }
+}

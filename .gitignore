@@ -1,0 +1,17 @@
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+node_modules/
+*.log
+out/
+release/
+dist/
+linux/
+macos/
+windows/
+*.command
+*.docx
+

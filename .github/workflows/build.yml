@@ -1,0 +1,100 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.ver.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: ver
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-mac:
+    needs: prepare
+    # Build BOTH arches on Apple Silicon. Intel (macos-13) runners are scarce and
+    # being deprecated by GitHub, so rather than depend on a native x64 runner we
+    # cross-build the x64 app here and explicitly install the x64 `sharp` binary
+    # (@img/sharp-darwin-x64) — otherwise the Intel app ships missing it and crashes.
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install sharp binaries for BOTH arches
+        # npm ci only fetched the host (arm64) sharp binary. Pull the x64 set too
+        # (and re-assert arm64) so each packaged app bundles its correct native lib.
+        run: |
+          npm install --no-save --include=optional --os=darwin --cpu=x64   sharp@0.33.5
+          npm install --no-save --include=optional --os=darwin --cpu=arm64 sharp@0.33.5
+          echo "sharp platform packages now present:"
+          ls node_modules/@img
+
+      - name: Build & package (x64 + arm64)
+        run: npx electron-vite build && npx electron-builder --mac --x64 --arm64 --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Code signing (Developer ID Application cert, base64-encoded .p12)
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # Notarization (Apple ID + app-specific password + team)
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          files: release/*.dmg
+          draft: true
+
+  build-windows:
+    needs: prepare
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build & package
+        run: npx electron-vite build && npx electron-builder --win --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          files: |
+            release/*.exe
+            release/*.exe.blockmap
+          draft: true
