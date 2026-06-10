@@ -69,7 +69,7 @@ jobs:
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
           files: release/*.dmg
-          draft: true
+          draft: false
 
   build-windows:
     needs: prepare
@@ -97,4 +97,4 @@ jobs:
           files: |
             release/*.exe
             release/*.exe.blockmap
-          draft: true
+          draft: false
