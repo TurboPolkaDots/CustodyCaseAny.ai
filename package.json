@@ -75,7 +75,7 @@
       "notarize": true
     },
     "dmg": {
-      "artifactName": "CustodyCase-${version}-${arch}.dmg",
+      "artifactName": "CustodyCase-mac-${arch}.dmg",
       "contents": [
         {
           "x": 130,
@@ -102,7 +102,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "CustodyCase-Setup-${version}.exe",
+      "artifactName": "CustodyCase-Setup.exe",
       "shortcutName": "CustodyCase.ai"
     },
     "linux": {
