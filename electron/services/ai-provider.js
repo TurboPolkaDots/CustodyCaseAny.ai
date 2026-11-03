@@ -28,6 +28,35 @@ const PROVIDERS = {
     baseUrl: 'https://api.x.ai/v1/chat/completions',
     defaultModel: 'grok-4-fast-reasoning-latest',
     models: ['grok-4-latest', 'grok-4-fast-reasoning-latest', 'grok-3-latest']
+  },
+  hermes: {
+    name: 'Hermes Agent (local proxy)',
+    local: false,
+    baseUrl: 'http://localhost:8080/v1/chat/completions',
+    defaultModel: 'current',
+    models: []
+  },
+  openrouter: {
+    name: 'OpenRouter',
+    local: false,
+    baseUrl: 'https://openrouter.ai/api/v1/chat/completions',
+    defaultModel: 'anthropic/claude-3.5-sonnet',
+    models: [
+      'anthropic/claude-3.5-sonnet',
+      'anthropic/claude-3-opus',
+      'openai/gpt-4o',
+      'openai/gpt-4o-mini',
+      'google/gemini-pro-1.5',
+      'meta-llama/llama-3.1-405b',
+      'nvidia/nemotron-3-ultra'
+    ]
+  },
+  custom: {
+    name: 'Custom OpenAI-compatible',
+    local: false,
+    baseUrl: '',
+    defaultModel: 'custom-model',
+    models: []
   }
 }
 
@@ -36,16 +65,18 @@ class AIProvider {
     const config = loadConfig() || {}
     return {
       provider: config.aiProvider || 'ollama',
-      apiKey: config.aiApiKey || '',
-      model: config.aiModel || ''
+      apiKey: *** || '',
+      model: config.aiModel || '',
+      baseUrl: config.aiBaseUrl || ''
     }
   }
 
-  setConfig({ provider, apiKey, model }) {
+  setConfig({ provider, apiKey, model, baseUrl }) {
     updateConfig({
       aiProvider: provider,
-      aiApiKey: apiKey || '',
-      aiModel: model || ''
+      aiApiKey: *** || '',
+      aiModel: model || '',
+      aiBaseUrl: baseUrl || ''
     })
   }
 
@@ -70,15 +101,15 @@ class AIProvider {
   }
 
   async chat(model, messages, options = {}) {
-    const { provider, apiKey } = this.getConfig()
+    const { provider, model: configModel } = this.getConfig()
     // For cloud providers, always use the configured cloud model (ignore local model names like llama3.2:3b)
-    const activeModel = provider === 'ollama' ? (model || this.getActiveModel()) : this.getActiveModel()
+    const activeModel = provider === 'ollama' ? (model || this.getActiveModel()) : (configModel || this.getActiveModel())
 
     if (provider === 'ollama') {
       return await ollama.chat(activeModel, messages, options)
     }
 
-    return await this._cloudChat(provider, apiKey, activeModel, messages, options)
+    return await this._cloudChat(provider, this.getConfig().apiKey, activeModel, messages, options)
   }
 
   async chatJson(model, messages, retries = 2) {
@@ -117,8 +148,10 @@ class AIProvider {
       return await this._anthropicChat(apiKey, model, messages)
     }
 
-    // OpenAI-compatible API (OpenAI, xAI)
-    return await this._openaiChat(providerConfig.baseUrl, apiKey, model, messages)
+    // Use custom baseUrl if set, otherwise fall back to provider default
+    const config = this.getConfig()
+    const baseUrl = config.baseUrl || providerConfig.baseUrl
+    return await this._openaiChat(baseUrl, apiKey, model, messages)
   }
 
   async _openaiChat(baseUrl, apiKey, model, messages) {
