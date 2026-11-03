@@ -41,8 +41,9 @@ Everything runs on your machine. The app ships with no telemetry and makes no ne
 unless *you* configure a cloud AI provider.
 
 - **Default: [Ollama](https://ollama.com)** — runs the AI 100% locally, fully offline.
-- **Optional cloud models** — you may supply your own OpenAI, Anthropic, or xAI API key in
+- **Optional cloud models** — you may supply your own OpenAI, Anthropic, xAI, OpenRouter or any OpenAI compatible API key and base URL in
   Settings. Keys are stored in your OS keychain; only then does the app contact that provider.
+
 
 ## Install
 
