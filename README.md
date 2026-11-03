@@ -53,8 +53,8 @@ page — signed macOS `.dmg` (Apple Silicon + Intel) and Windows installer.
 ### Build from source
 
 ```bash
-git clone https://github.com/randylahey-dev/CustodyCase.ai.git
-cd CustodyCase.ai
+git clone https://github.com/TurboPolkaDots/CustodyCaseAny.ai.git
+cd CustodyCaseAny.ai
 npm install
 npm run dev          # run in development
 npm run dist:mac     # or dist:win / dist:linux to package
