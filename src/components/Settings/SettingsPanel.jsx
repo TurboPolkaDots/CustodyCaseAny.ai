@@ -11,7 +11,7 @@ export default function SettingsPanel() {
   const [oldPass, setOldPass] = useState('')
   const [newPass, setNewPass] = useState('')
   const [passMsg, setPassMsg] = useState('')
-  const [aiConfig, setAiConfig] = useState({ provider: 'ollama', apiKey: '', model: '', providers: {} })
+  const [aiConfig, setAiConfig] = useState({ provider: 'ollama', apiKey: '', model: '', baseUrl: '', providers: {} })
   const [aiTestResult, setAiTestResult] = useState(null)
   const [aiSaving, setAiSaving] = useState(false)
   const [caseInfo, setCaseInfo] = useState({ caseName: '', caseNumber: '', jurisdiction: '', userRole: '', caseType: 'modification' })
@@ -43,7 +43,7 @@ export default function SettingsPanel() {
   const loadAiConfig = async () => {
     try {
       const cfg = await window.api.invoke('ai:get-config')
-      setAiConfig(cfg)
+      setAiConfig({ baseUrl: '', ...cfg })
     } catch (error) {
       console.error('Failed to load AI config:', error)
     }
@@ -58,7 +58,8 @@ export default function SettingsPanel() {
       await window.api.invoke('ai:set-config', {
         provider: newConfig.provider,
         apiKey: newConfig.apiKey,
-        model: newConfig.model
+        model: newConfig.model,
+        baseUrl: newConfig.baseUrl
       })
     } catch (error) {
       console.error('Failed to save AI config:', error)
@@ -159,7 +160,12 @@ export default function SettingsPanel() {
               onChange={(e) => {
                 const provider = e.target.value
                 setAiTestResult(null)
-                saveAiConfig({ provider, apiKey: provider === 'ollama' ? '' : aiConfig.apiKey, model: '' })
+                saveAiConfig({
+                  provider,
+                  apiKey: provider === 'hermes' ? 'hermes' : (provider === 'ollama' ? '' : aiConfig.apiKey),
+                  model: '',
+                  baseUrl: ''
+                })
               }}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-white focus:outline-none focus:border-indigo-500"
             >
@@ -202,8 +208,28 @@ export default function SettingsPanel() {
             </div>
           )}
 
-          {/* Model selector (cloud providers) */}
-          {aiConfig.provider !== 'ollama' && aiConfig.providers?.[aiConfig.provider]?.models && (
+          {/* Base URL (cloud providers) */}
+          {aiConfig.provider !== 'ollama' && (
+            <div className="mb-3">
+              <label className="text-xs text-slate-500 mb-1 block">
+                Base URL {aiConfig.provider !== 'custom' ? '(optional — leave blank to use the built-in default)' : '(required)'}
+              </label>
+              <input
+                type="text"
+                value={aiConfig.baseUrl || ''}
+                onChange={(e) => setAiConfig({ ...aiConfig, baseUrl: e.target.value })}
+                onBlur={() => saveAiConfig({ baseUrl: aiConfig.baseUrl })}
+                placeholder={aiConfig.providers?.[aiConfig.provider]?.baseUrl || 'http://localhost:8080/v1/chat/completions'}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+              {aiConfig.provider === 'hermes' && (
+                <p className="text-[10px] text-slate-600 mt-1">Start the proxy with: hermes proxy</p>
+              )}
+            </div>
+          )}
+
+          {/* Model selector (cloud providers with a model list) */}
+          {aiConfig.provider !== 'ollama' && aiConfig.providers?.[aiConfig.provider]?.models?.length > 0 && (
             <div className="mb-3">
               <label className="text-xs text-slate-500 mb-1 block">Model</label>
               <select
@@ -215,6 +241,23 @@ export default function SettingsPanel() {
                   <option key={m} value={m}>{m}</option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {/* Model free-text (cloud providers without a model list) */}
+          {aiConfig.provider !== 'ollama' && !aiConfig.providers?.[aiConfig.provider]?.models?.length && (
+            <div className="mb-3">
+              <label className="text-xs text-slate-500 mb-1 block">
+                Model {aiConfig.provider === 'hermes' ? '(optional — leave blank to use your active Hermes model)' : '(optional)'}
+              </label>
+              <input
+                type="text"
+                value={aiConfig.model || ''}
+                onChange={(e) => setAiConfig({ ...aiConfig, model: e.target.value })}
+                onBlur={() => saveAiConfig({ model: aiConfig.model })}
+                placeholder={aiConfig.providers?.[aiConfig.provider]?.defaultModel || ''}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
             </div>
           )}
 

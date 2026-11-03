@@ -65,7 +65,7 @@ class AIProvider {
     const config = loadConfig() || {}
     return {
       provider: config.aiProvider || 'ollama',
-      apiKey: *** || '',
+      apiKey: config.aiApiKey || '',
       model: config.aiModel || '',
       baseUrl: config.aiBaseUrl || ''
     }
@@ -74,7 +74,7 @@ class AIProvider {
   setConfig({ provider, apiKey, model, baseUrl }) {
     updateConfig({
       aiProvider: provider,
-      aiApiKey: *** || '',
+      aiApiKey: apiKey || '',
       aiModel: model || '',
       aiBaseUrl: baseUrl || ''
     })
